@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🅿️ DE Price Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ========== CSS Variables ========== */
+    :root {
+      --purple:        #542E91;
+      --purple-hover:  #6d3db5;
+      --purple-light:  #ede7f6;
+      --purple-sep:    #d9d2e9;
+      --yellow:        #FDDC06;
+      --yellow-dark:   #e5c800;
+      --teal:          #00B0A6;
+      --teal-dark:     #009990;
+      --red:           #FF5F68;
+      --bg:            #F0F0F0;
+      --white:         #ffffff;
+      --border:        #e0e0e0;
+      --text:          #2c2c2c;
+      --text-light:    #777777;
+      --sidebar-w:     370px;
+      --radius:        12px;
+      --shadow:        0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    /* ========== Reset ========== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    /* ========== Header ========== */
+    header {
+      background: var(--purple);
+      color: var(--white);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    header .header-icon { font-size: 28px; line-height: 1; }
+    header h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+    header p  { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+    /* ========== Layout ========== */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100vh - 60px);
+    }
+
+    /* ========== Sidebar ========== */
+    .sidebar {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--purple);
+      margin-bottom: 10px;
+    }
+
+    /* Baseline codes */
+    .baseline-box {
+      background: var(--purple-light);
+      border: 1px solid var(--purple-sep);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--purple);
+      line-height: 2;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hint text */
+    .hint {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    /* Form elements */
+    textarea,
+    input[type="date"],
+    input[type="time"] {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      background: var(--white);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    textarea:focus,
+    input[type="date"]:focus,
+    input[type="time"]:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(84,46,145,0.12);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 72px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* Date rows */
+    .date-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 88px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .date-row:last-child { margin-bottom: 0; }
+    .date-row label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Airport section */
+    .filter-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .filter-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--purple);
+      background: transparent;
+      color: var(--purple);
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.5;
+    }
+    .filter-btn:hover { background: var(--purple); color: var(--white); }
+
+    .airport-scroll {
+      max-height: 210px;
+      overflow-y: auto;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--white);
+      padding: 6px 4px;
+    }
+
+    .region-label {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--purple);
+      padding: 4px 8px 2px;
+      background: var(--purple-light);
+      border-radius: 4px;
+      margin: 4px 4px 4px;
+      display: block;
+    }
+
+    .airport-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .airport-item:hover { background: var(--bg); }
+    .airport-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--purple);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .airport-item .ap-code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple);
+      min-width: 34px;
+    }
+    .airport-item .ap-name {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    /* Start button */
+    #startBtn {
+      width: 100%;
+      padding: 13px;
+      background: var(--yellow);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.02em;
+      margin-top: 4px;
+    }
+    #startBtn:hover   { background: var(--yellow-dark); }
+    #startBtn:active  { transform: scale(0.98); }
+    #startBtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* ========== Results Panel ========== */
+    .results-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .results-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--white);
+    }
+
+    .tab-active {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--purple);
+      padding-bottom: 4px;
+      border-bottom: 3px solid var(--purple);
+    }
+
+    #csvBtn {
+      padding: 8px 18px;
+      background: var(--teal);
+      color: var(--white);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #csvBtn:hover    { background: var(--teal-dark); }
+    #csvBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .results-body {
+      flex: 1;
+      overflow: auto;
+    }
+
+    /* ========== Placeholder / Loading ========== */
+    .state-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      gap: 14px;
+      color: var(--text-light);
+      padding: 40px;
+      text-align: center;
+    }
+    .state-box .big-icon { font-size: 52px; }
+    .state-box p { font-size: 14px; font-weight: 600; }
+
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid var(--purple-sep);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-label { font-size: 13px; font-weight: 700; color: var(--purple); }
+    .progress-sub   { font-size: 11px; color: var(--text-light); }
+
+    /* Progress bar */
+    .progress-bar-wrap {
+      width: 200px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--purple);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* Error */
+    .error-box {
+      margin: 24px;
+      padding: 18px 20px;
+      background: #fff3f3;
+      border: 1.5px solid var(--red);
+      border-radius: var(--radius);
+      color: #c0392b;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .error-box strong { font-size: 14px; }
+
+    /* ========== Results Table ========== */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .results-table thead tr {
+      background: var(--purple);
+      color: var(--white);
+    }
+    .results-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      background: var(--purple);
+      z-index: 2;
+    }
+    .results-table td {
+      padding: 7px 14px;
+      border-bottom: 1px solid #f5f5f5;
+      vertical-align: middle;
+    }
+    .results-table tbody tr:hover td { background: #f9f6fd; }
+
+    /* Separator row between airports */
+    .results-table tr.sep-row td {
+      padding: 3px 0;
+      background: var(--purple-sep);
+      border-bottom: none;
+    }
+    .results-table tr.sep-row:hover td { background: var(--purple-sep); }
+
+    /* Cell types */
+    .c-airport {
+      font-family: 'Courier New', monospace;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--purple);
+      white-space: nowrap;
+    }
+    .c-name {
+      max-width: 300px;
+      word-break: break-word;
+    }
+    .c-code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+    .c-price {
+      text-align: right;
+      font-weight: 700;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .c-price.no-price { color: #cccccc; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar           { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track     { background: var(--bg); }
+    ::-webkit-scrollbar-thumb     { background: #c0bcd4; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9e99b8; }
+
+    /* ========== Responsive ========== */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; height: auto; }
+      .results-panel { min-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="header-icon">🅿️</div>
+  <div>
+    <h1>DE Price Checker</h1>
+    <p>Parkprodukte und Preise nach Agent, Datum und Airport vergleichen</p>
+  </div>
+</header>
+
+<!-- ===================== LAYOUT ===================== -->
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+
+    <!-- Baseline Codes -->
+    <div class="card">
+      <div class="card-title">Baseline Codes</div>
+      <div class="baseline-box">ABCDE<br>APSDI</div>
+    </div>
+
+    <!-- Agent Code To Check -->
+    <div class="card">
+      <div class="card-title">Agent Code To Check</div>
+      <p class="hint">One per line. If empty, the baseline codes above are used. Column headers in the output are named after the agents.</p>
+      <textarea id="agentCodes" placeholder="e.g.&#10;ABCDE&#10;APSDI" spellcheck="false"></textarea>
+    </div>
+
+    <!-- Search Dates & Times -->
+    <div class="card">
+      <div class="card-title">Search Dates &amp; Times</div>
+      <div class="date-row">
+        <label>From</label>
+        <input type="date" id="fromDate" />
+        <input type="time" id="fromTime" value="09:00" />
+      </div>
+      <div class="date-row">
+        <label>To</label>
+        <input type="date" id="toDate" />
+        <input type="time" id="toTime" value="15:00" />
+      </div>
+    </div>
+
+    <!-- Airports -->
+    <div class="card">
+      <div class="card-title">Airports</div>
+      <div class="filter-btns">
+        <button class="filter-btn" onclick="selectGroup('all')">All DACH</button>
+        <button class="filter-btn" onclick="selectGroup('DE')">DE</button>
+        <button class="filter-btn" onclick="selectGroup('AT')">AT</button>
+        <button class="filter-btn" onclick="selectGroup('CH')">CH</button>
+        <button class="filter-btn" onclick="selectGroup('none')">None</button>
+      </div>
+      <div class="airport-scroll" id="airportList"></div>
+    </div>
+
+    <!-- Start button -->
+    <button id="startBtn" onclick="startScan()">🚀 Start Scan</button>
+
+  </aside>
+
+  <!-- ===== RESULTS ===== -->
+  <div class="results-panel">
+    <div class="results-topbar">
+      <span class="tab-active">Prices</span>
+      <button id="csvBtn" onclick="downloadCSV()" disabled>⬇ Download CSV</button>
+    </div>
+    <div class="results-body" id="resultsBody">
+      <div class="state-box">
+        <div class="big-icon">🅿️</div>
+        <p>Agent, Datum und Airports wählen, dann „Start Scan" klicken.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.layout -->
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+  /* ── CONFIG ─────────────────────────────────────────── */
+  const HX_TOKEN    = 'fb9e8f70-b38e-4c43-88a6-c08a6c7b4813';
+  const HX_SID      = '12345';
+  const BASE_URL    = 'https://www.holidayextras.com/dock-yard/hapi/carparks/';
+  const BASELINE    = ['ABCDE', 'APSDI'];
+
+  /* ── AIRPORT DATA (DACH) ────────────────────────────── */
+  const AIRPORTS = [
+    // DE
+    { code:'BER', name:'Berlin Brandenburg',     region:'DE' },
+    { code:'BRE', name:'Bremen',                 region:'DE' },
+    { code:'DTM', name:'Dortmund',               region:'DE' },
+    { code:'DRS', name:'Dresden',                region:'DE' },
+    { code:'DUS', name:'Düsseldorf',             region:'DE' },
+    { code:'ERF', name:'Erfurt',                 region:'DE' },
+    { code:'FRA', name:'Frankfurt',              region:'DE' },
+    { code:'HHN', name:'Frankfurt Hahn',         region:'DE' },
+    { code:'FDH', name:'Friedrichshafen',        region:'DE' },
+    { code:'HAM', name:'Hamburg',                region:'DE' },
+    { code:'HAJ', name:'Hannover',               region:'DE' },
+    { code:'FKB', name:'Karlsruhe/Baden-Baden',  region:'DE' },
+    { code:'CGN', name:'Köln/Bonn',              region:'DE' },
+    { code:'LEJ', name:'Leipzig/Halle',          region:'DE' },
+    { code:'FMM', name:'Memmingen/Allgäu',       region:'DE' },
+    { code:'MUC', name:'München',                region:'DE' },
+    { code:'NUE', name:'Nürnberg',               region:'DE' },
+    { code:'PAD', name:'Paderborn',              region:'DE' },
+    { code:'STR', name:'Stuttgart',              region:'DE' },
+    { code:'NRN', name:'Weeze (Niederrhein)',     region:'DE' },
+    // AT
+    { code:'SZG', name:'Salzburg',               region:'AT' },
+    { code:'VIE', name:'Wien',                   region:'AT' },
+    // CH
+    { code:'BSL', name:'Basel',                  region:'CH' },
+    { code:'GVA', name:'Genf',                   region:'CH' },
+    { code:'ZRH', name:'Zürich',                 region:'CH' },
+  ];
+
+  /* ── STATE ──────────────────────────────────────────── */
+  let lastTableData = null;
+  let lastAgents    = null;
+
+  /* ── INIT ───────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    setDefaultDates();
+    buildAirportList();
+    selectGroup('all');
+  });
+
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+  function getNextSaturday() {
+    const t   = new Date();
+    const day = t.getDay(); // 0=Sun … 6=Sat
+    const add = day === 6 ? 7 : (6 - day);
+    return new Date(t.getFullYear(), t.getMonth(), t.getDate() + add);
+  }
+
+  function dateStr(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  function setDefaultDates() {
+    const sat  = getNextSaturday();
+    const sat8 = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate() + 7);
+    document.getElementById('fromDate').value = dateStr(sat);
+    document.getElementById('toDate').value   = dateStr(sat8);
+  }
+
+  /* ── AIRPORT LIST ───────────────────────────────────── */
+  function buildAirportList() {
+    const regions = ['DE', 'AT', 'CH'];
+    let html = '';
+    regions.forEach(r => {
+      html += `<span class="region-label">${r}</span>`;
+      AIRPORTS.filter(a => a.region === r).forEach(a => {
+        html += `
+          <label class="airport-item">
+            <input type="checkbox" class="ap-cb" data-region="${r}" value="${a.code}" checked />
+            <span class="ap-code">${a.code}</span>
+            <span class="ap-name">${a.name}</span>
+          </label>`;
+      });
+    });
+    document.getElementById('airportList').innerHTML = html;
+  }
+
+  function selectGroup(g) {
+    document.querySelectorAll('.ap-cb').forEach(cb => {
+      if      (g === 'all')  cb.checked = true;
+      else if (g === 'none') cb.checked = false;
+      else                   cb.checked = (cb.dataset.region === g);
+    });
+  }
+
+  /* ── API HELPERS ────────────────────────────────────── */
+  function extractRawPrice(item) {
+    if (!item || item.price == null) return null;
+    if (typeof item.price === 'number') return item.price;
+    if (item.price.amount != null)      return item.price.amount;
+    if (item.price.value  != null)      return item.price.value;
+    return null;
+  }
+
+  function fmtPrice(raw) {
+    if (raw == null) return '';
+    const n = Number(raw);
+    if (isNaN(n))   return '';
+    return (n / 100).toFixed(2).replace('.', ',') + '€';
+  }
+
+  async function fetchCarparks(airport, agent, fromStr, toStr) {
+    const p = new URLSearchParams({
+      agent, airport, location: airport,
+      lang: 'en', productType: 'carparks',
+      from: fromStr, to: toStr,
+      token: HX_TOKEN, sid: HX_SID
+    });
+    const url = BASE_URL + '?' + p.toString();
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + airport + '/' + agent);
+    const json = await res.json();
+    const data = json && (json.data || json.carparks || json);
+    if (Array.isArray(data))                 return data;
+    if (data && Array.isArray(data.carparks)) return data.carparks;
+    return [];
+  }
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ── MAIN SCAN ──────────────────────────────────────── */
+  async function startScan() {
+    // Collect agents
+    const raw = document.getElementById('agentCodes').value.trim();
+    const agents = raw
+      ? raw.split('\n').map(s => s.trim().toUpperCase()).filter(Boolean)
+      : [...BASELINE];
+
+    // Collect dates
+    const fromDate = document.getElementById('fromDate').value;
+    const fromTime = document.getElementById('fromTime').value;
+    const toDate   = document.getElementById('toDate').value;
+    const toTime   = document.getElementById('toTime').value;
+
+    if (!fromDate || !toDate) {
+      alert('Bitte From- und To-Datum eintragen.');
+      return;
+    }
+    const fromStr = fromDate + ' ' + fromTime;
+    const toStr   = toDate   + ' ' + toTime;
+
+    // Collect airports
+    const airports = Array.from(document.querySelectorAll('.ap-cb:checked')).map(c => c.value);
+    if (airports.length === 0) {
+      alert('Bitte mindestens einen Airport auswählen.');
+      return;
+    }
+
+    // Lock UI
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('csvBtn').disabled   = true;
+    lastTableData = null;
+    lastAgents    = null;
+
+    const total = airports.length * agents.length;
+    let   done  = 0;
+    showLoading('Starte …', done, total);
+
+    try {
+      const raw = {};
+
+      for (const airport of airports) {
+        raw[airport] = {};
+        for (const agent of agents) {
+          done++;
+          updateLoading(airport + ' / ' + agent, done, total);
+          try {
+            raw[airport][agent] = await fetchCarparks(airport, agent, fromStr, toStr);
+          } catch (err) {
+            /* CORS or network error on first call → abort with hint */
+            if (err instanceof TypeError || (err.message && err.message.toLowerCase().includes('failed to fetch'))) {
+              showCorsError(err);
+              document.getElementById('startBtn').disabled = false;
+              return;
+            }
+            console.warn('Fetch failed:', airport, agent, err.message);
+            raw[airport][agent] = [];
+          }
+          await sleep(300);
+        }
+      }
+
+      lastAgents    = agents;
+      lastTableData = buildTableData(raw, agents, airports);
+      renderTable(lastTableData, agents);
+      document.getElementById('csvBtn').disabled = false;
+
+    } catch (err) {
+      showError('Unerwarteter Fehler: ' + err.message);
+    } finally {
+      document.getElementById('startBtn').disabled = false;
+    }
+  }
+
+  /* ── DATA PROCESSING ────────────────────────────────── */
+  function buildTableData(raw, agents, airports) {
+    return airports.reduce((acc, airport) => {
+      const map = {};
+
+      agents.forEach(agent => {
+        (raw[airport][agent] || []).forEach(item => {
+          const code = item.unprefixedCode || item.code || '';
+          const name = item.name || '';
+          if (!map[code]) map[code] = { name, code, prices: {} };
+          map[code].prices[agent] = extractRawPrice(item);
+        });
+      });
+
+      const products = Object.values(map);
+      if (products.length === 0) return acc;
+
+      /* Sort ascending by first agent's price (nulls last) */
+      const first = agents[0];
+      products.sort((a, b) => {
+        const pa = a.prices[first] != null ? Number(a.prices[first]) : Infinity;
+        const pb = b.prices[first] != null ? Number(b.prices[first]) : Infinity;
+        return pa - pb;
+      });
+
+      acc.push({ airport, products });
+      return acc;
+    }, []);
+  }
+
+  /* ── RENDER TABLE ───────────────────────────────────── */
+  function renderTable(tableData, agents) {
+    if (!tableData.length) {
+      setBody('<div class="state-box"><div class="big-icon">🔍</div><p>Keine Produkte für die gewählten Filter gefunden.</p></div>');
+      return;
+    }
+
+    const numCols = 3 + agents.length;
+    let html = '<table class="results-table"><thead><tr>'
+      + '<th>Airport</th><th>Produkt</th><th>Code</th>'
+      + agents.map(a => `<th>${esc(a)}</th>`).join('')
+      + '</tr></thead><tbody>';
+
+    tableData.forEach(({ airport, products }) => {
+      products.forEach(p => {
+        html += '<tr>'
+          + `<td class="c-airport">${esc(airport)}</td>`
+          + `<td class="c-name">${esc(p.name)}</td>`
+          + `<td class="c-code">${esc(p.code)}</td>`;
+        agents.forEach(agent => {
+          const fmt = fmtPrice(p.prices[agent]);
+          html += fmt
+            ? `<td class="c-price">${fmt}</td>`
+            : `<td class="c-price no-price">–</td>`;
+        });
+        html += '</tr>';
+      });
+      /* Purple separator row between airports */
+      html += `<tr class="sep-row"><td colspan="${numCols}"></td></tr>`;
+    });
+
+    html += '</tbody></table>';
+    setBody(html);
+  }
+
+  /* ── CSV DOWNLOAD ───────────────────────────────────── */
+  function downloadCSV() {
+    if (!lastTableData || !lastAgents) return;
+
+    const rows = [['Airport', 'Produkt', 'Code', ...lastAgents]];
+
+    lastTableData.forEach(({ airport, products }) => {
+      products.forEach(p => {
+        rows.push([
+          airport,
+          p.name,
+          p.code,
+          ...lastAgents.map(a => fmtPrice(p.prices[a]))
+        ]);
+      });
+      rows.push([]); /* blank separator */
+    });
+
+    const csv = rows
+      .map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
+      .join('\r\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a    = Object.assign(document.createElement('a'), {
+      href:     URL.createObjectURL(blob),
+      download: 'de-price-checker-' + new Date().toISOString().slice(0, 10) + '.csv'
+    });
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /* ── UI HELPERS ─────────────────────────────────────── */
+  function setBody(html) {
+    document.getElementById('resultsBody').innerHTML = html;
+  }
+
+  function showLoading(msg, done, total) {
+    setBody(`
+      <div class="state-box" id="loadingBox">
+        <div class="spinner"></div>
+        <div class="progress-label" id="loadLabel">${esc(msg)}</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="progress-sub" id="loadSub">${done} / ${total} Abfragen</div>
+      </div>`);
+  }
+
+  function updateLoading(msg, done, total) {
+    const lbl = document.getElementById('loadLabel');
+    const sub = document.getElementById('loadSub');
+    const bar = document.getElementById('progressBar');
+    if (lbl) lbl.textContent = msg;
+    if (sub) sub.textContent = done + ' / ' + total + ' Abfragen';
+    if (bar) bar.style.width = Math.round((done / total) * 100) + '%';
+  }
+
+  function showError(msg) {
+    setBody(`<div class="error-box"><strong>Fehler</strong><br>${esc(msg).replace(/\n/g,'<br>')}</div>`);
+  }
+
+  function showCorsError(err) {
+    setBody(`
+      <div class="error-box">
+        <strong>⚠️ CORS-Fehler – API-Zugriff blockiert</strong><br><br>
+        Der Browser hat den Zugriff auf die HX-API abgelehnt, weil das Tool von einer anderen Domain aufgerufen wird.<br><br>
+        <strong>Lösungen:</strong><br>
+        &nbsp;• Tool auf einer HX-Domain hosten (z.B. intern.holidayextras.com)<br>
+        &nbsp;• Tool lokal via <code>npx serve .</code> oder VS Code Live Server starten<br>
+        &nbsp;• IT bitten, CORS für diese Domain auf der API freizugeben<br><br>
+        <em>Technisch: ${esc(err.message)}</em>
+      </div>`);
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
